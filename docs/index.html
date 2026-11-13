@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的豆瓣 · 项目说明</title>
+<style>
+:root{--paper:#f7f6f2;--ink:#1b1f24;--muted:#7d848c;--green:#2f9e44;--line:#e6e3db}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:400 16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:64px 22px 90px}
+h1{font:600 34px/1.25 "Songti SC","SimSun",Georgia,serif;letter-spacing:.02em;margin:0 0 10px}
+h1 em{font-style:normal;color:var(--green)}
+.lead{color:var(--muted);margin:0 0 34px;font-size:17px}
+h2{font:600 15px/1.4 -apple-system,sans-serif;letter-spacing:.12em;color:var(--muted);
+  margin:38px 0 12px;text-transform:uppercase}
+pre{background:#1d2026;color:#e8e6e1;padding:16px 18px;border-radius:10px;overflow-x:auto;
+  font:13px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;margin:0}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+p code,li code{background:#edeae3;padding:2px 6px;border-radius:4px;font-size:14px}
+ul{padding-left:20px;margin:10px 0}
+li{margin:6px 0}
+.card{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:#fff;margin:14px 0}
+.card b{display:block;margin-bottom:4px}
+.card span{color:var(--muted);font-size:14px}
+.tag{display:inline-block;height:24px;line-height:24px;padding:0 10px;border-radius:12px;
+  background:#eaf6ec;color:#227a33;font-size:12px;margin-right:6px}
+a{color:var(--green)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>我的<em>豆瓣</em></h1>
+  <p class="lead">条目 · 五星 · 短评长评 · 想看/在看/看过/弃了 · 标签 · 时间线 · 年度统计。<br>
+  把那套机制搬回你自己的机器，零依赖，断网能开。</p>
+
+  <div class="card"><b>这是源码仓库，不是在线应用</b>
+    <span>页面需要本地后端提供接口，所以请 clone 下来跑 <code>python app.py</code>。
+    直接打开 GitHub Pages 只会看到这个说明页。</span></div>
+
+  <h2>运行</h2>
+  <pre>git clone https://github.com/2407571109-a11y/my-douban.git
+cd my-douban
+python app.py            # → http://127.0.0.1:8601</pre>
+  <p>Windows 双击 <code>start.bat</code> 也行。首次启动自动建库，并用 <code>data/seed.json</code> 播种 10 条演示条目。</p>
+
+  <h2>技术栈</h2>
+  <p><span class="tag">Python 3.8+</span><span class="tag">标准库</span><span class="tag">SQLite</span><span class="tag">原生 JS</span><span class="tag">零外链</span></p>
+  <ul>
+    <li>后端单文件 <code>app.py</code>：<code>http.server</code> + <code>sqlite3</code>，不装任何第三方包</li>
+    <li>前端单文件 <code>static/index.html</code>：CSS/JS/图标/图表全内联，无框架无 CDN</li>
+    <li>封面按片名哈希程序化生成，不依赖图床</li>
+  </ul>
+
+  <h2>接口</h2>
+  <pre>GET    /api/health
+GET    /api/schema
+GET    /api/entries?pageSize=200&amp;startCursor=0
+POST   /api/entries          {"properties": {"标题": {"text": "..."}}}
+PATCH  /api/entries/&lt;id&gt;     {"properties": {...}}   # 增量
+DELETE /api/entries/&lt;id&gt;</pre>
+
+  <h2>不做的事</h2>
+  <p>没有小组、同城、关注粉丝——一个人用不上。没有账号体系——靠 SQLite 文件备份迁移就够了。</p>
+
+  <footer>MIT License · <a href="https://github.com/2407571109-a11y/my-douban">github.com/2407571109-a11y/my-douban</a></footer>
+</div>
+</body>
+</html>
