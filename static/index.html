@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f6f2">
+<title>我的豆瓣</title>
+<style>
+:root{
+  --green:#2f9e44; --green-d:#227a33; --green-l:#eaf6ec;
+  --paper:#f7f6f2; --card:#ffffff; --ink:#1b1f24; --ink-2:#4a5158;
+  --muted:#8a9199; --line:#eae7e0; --star:#e8a33d; --red:#c0392b;
+  --shadow:0 1px 2px rgba(27,31,36,.05), 0 6px 18px rgba(27,31,36,.05);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font:400 15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(68px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;height:auto}
+button{font-family:inherit}
+input,select,textarea{font-family:inherit;font-size:16px}
+.app{max-width:920px;margin:0 auto;min-height:100vh}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:11px 16px;background:rgba(247,246,242,.93);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:baseline;gap:7px;font:600 21px/1 "Songti SC","SimSun",Georgia,serif;letter-spacing:.05em}
+.brand em{font-style:normal;color:var(--green)}
+.brand span{font:400 11px/1 -apple-system,sans-serif;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.sync{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);min-height:24px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:block}
+.sync.on i{background:var(--green);box-shadow:0 0 0 3px rgba(47,158,68,.14)}
+.sync.off i{background:var(--red)}
+
+/* ---------- 视图 ---------- */
+.view{display:none;padding:14px 16px 8px}
+.view.is-active{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.hero{padding:6px 2px 12px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.hero h1{margin:0;font:600 19px/1.3 "Songti SC","SimSun",Georgia,serif;letter-spacing:.03em}
+.hero p{margin:5px 0 0;font-size:12.5px;color:var(--muted)}
+
+/* ---------- 时间线 ---------- */
+.stream-day{margin-bottom:18px}
+.day-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:8px}
+.day-label b{font-weight:600;color:var(--ink-2);font-size:12.5px}
+.day-label:after{content:"";flex:1;height:1px;background:var(--line)}
+.act{display:flex;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line)}
+.act:last-child{border-bottom:0}
+.act-cv{width:46px;height:62px;border-radius:5px;flex:0 0 46px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font:600 18px/1 "Songti SC",Georgia,serif;overflow:hidden;position:relative}
+.act-body{flex:1;min-width:0}
+.act-line{font-size:14px;color:var(--ink-2);line-height:1.5;word-break:break-word}
+.act-line b{font-weight:600;color:var(--ink);margin-right:2px}
+.act-line .st{color:var(--green);font-weight:600}
+.act-sub{margin:4px 0 0;font-size:13.5px;color:var(--ink-2);word-break:break-word}
+.act-meta{margin-top:5px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11.5px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:10px;background:#f0eee8;color:#6b7178;font-size:11px}
+.pill.cat{background:var(--green-l);color:var(--green-d)}
+
+/* ---------- 星级 ---------- */
+.stars{position:relative;display:inline-block;line-height:1;font-size:13px;letter-spacing:2px;color:#dad6cc;white-space:nowrap}
+.stars b{position:absolute;left:0;top:0;overflow:hidden;color:var(--star);white-space:nowrap;text-shadow:0 0 0 var(--star)}
+.stars.big{font-size:17px;letter-spacing:3px}
+
+/* ---------- 条目库 ---------- */
+.searchbar{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+  border-radius:11px;padding:0 11px;height:42px;box-shadow:var(--shadow)}
+.searchbar svg{flex:0 0 17px;color:var(--muted)}
+.searchbar input{flex:1;border:0;outline:0;background:none;height:40px;font-size:16px;color:var(--ink)}
+.chips{display:flex;gap:7px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;height:31px;padding:0 13px;border-radius:16px;border:1px solid var(--line);background:var(--card);
+  color:var(--ink-2);font-size:13px;cursor:pointer;transition:.16s}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:13px;margin-top:14px}
+@media (max-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:11px}}
+.mv{background:var(--card);border-radius:11px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;
+  border:1px solid rgba(0,0,0,.03);transition:transform .16s,box-shadow .16s}
+.mv:active{transform:scale(.98)}
+.mv-cv{position:relative;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;padding:10px}
+.mv-cv em{font:600 30px/1.15 "Songti SC","SimSun",Georgia,serif;color:#fff;text-align:center;
+  text-shadow:0 2px 12px rgba(0,0,0,.24);letter-spacing:.06em;word-break:break-word}
+.mv-badge{position:absolute;top:7px;left:7px;height:19px;padding:0 6px;border-radius:4px;background:rgba(255,255,255,.9);
+  color:#3a4048;font-size:10.5px;line-height:19px;letter-spacing:.03em}
+.mv-rate{position:absolute;right:7px;bottom:7px;height:20px;padding:0 6px;border-radius:4px;
+  background:rgba(20,22,26,.62);color:#f6d68a;font-size:11px;line-height:20px;font-weight:600}
+.mv-info{padding:8px 9px 10px}
+.mv-title{font-size:13.5px;font-weight:600;line-height:1.35;margin:0;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.mv-sub{margin:3px 0 0;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv-quote{margin:5px 0 0;font-size:12px;color:var(--ink-2);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+.mv-foot{margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+
+/* ---------- 我的 ---------- */
+.stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+@media (max-width:640px){.stat-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:640px){.stat-row{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{background:var(--card);border-radius:11px;padding:13px 14px;box-shadow:var(--shadow)}
+.stat b{display:block;font:600 26px/1.2 "Songti SC",Georgia,serif;color:var(--ink);letter-spacing:.02em}
+.stat span{font-size:11.5px;color:var(--muted);letter-spacing:.05em}
+.panel{background:var(--card);border-radius:12px;padding:15px 15px 13px;box-shadow:var(--shadow);margin-top:13px}
+.panel h3{margin:0 0 12px;font-size:13px;font-weight:600;color:var(--ink-2);letter-spacing:.06em}
+.donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.legend{list-style:none;margin:0;padding:0;flex:1;min-width:130px;display:grid;gap:6px}
+.legend li{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2)}
+.legend i{width:9px;height:9px;border-radius:2px;flex:0 0 9px}
+.legend span{margin-left:auto;color:var(--muted);font-size:12px}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;background:#f2f0ea;
+  color:#5b626a;font-size:12.5px}
+.tag u{text-decoration:none;color:var(--muted);margin-left:5px;font-size:11px}
+
+/* ---------- 空态 / 加载 ---------- */
+.empty{padding:52px 20px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.9}
+.empty svg{width:38px;height:38px;opacity:.42;margin-bottom:10px}
+.empty b{display:block;font:600 15px/1.5 "Songti SC",Georgia,serif;color:var(--ink-2);margin-bottom:4px}
+.sk{background:linear-gradient(90deg,#efece6 25%,#f6f4ef 37%,#efece6 63%);background-size:400% 100%;
+  animation:sh 1.3s ease infinite;border-radius:8px}
+@keyframes sh{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.sk-cv{aspect-ratio:3/4;border-radius:11px}
+.sk-line{height:12px;margin-top:8px;width:80%}
+
+/* ---------- 底栏 ---------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;max-width:920px;margin:0 auto;
+  background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:0;color:var(--muted);font-size:10.5px;letter-spacing:.04em;cursor:pointer;padding:4px 0}
+.tab.is-active{color:var(--green)}
+.tab svg{width:21px;height:21px}
+.tab-add{flex:0 0 62px}
+.tab-add i{width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:flex;
+  align-items:center;justify-content:center;font-size:24px;font-style:normal;line-height:1;
+  box-shadow:0 4px 12px rgba(47,158,68,.3)}
+
+/* ---------- 抽屉 ---------- */
+.mask{position:fixed;inset:0;z-index:40;background:rgba(24,26,30,.34);animation:fade .18s ease}
+.sheet{position:fixed;z-index:50;inset:0;display:flex;flex-direction:column;background:var(--paper)}
+@media (min-width:700px){
+  .sheet{inset:auto;top:50%;left:50%;transform:translate(-50%,-50%);width:min(600px,92vw);max-height:88vh;
+    border-radius:16px;overflow:hidden;box-shadow:0 26px 70px rgba(20,22,26,.24)}
+}
+.sheet[hidden],.mask[hidden]{display:none}
+.sheet-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 12px;background:var(--card);border-bottom:1px solid var(--line)}
+.sheet-head .ttl{font:600 15px/1.4 "Songti SC",Georgia,serif;letter-spacing:.04em}
+.sheet-head button{height:36px;min-width:52px;padding:0 12px;border-radius:8px;border:0;background:none;
+  color:var(--ink-2);font-size:14px;cursor:pointer}
+.sheet-head .primary{background:var(--green);color:#fff;font-weight:600}
+.sheet-head .primary:disabled{opacity:.55}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 15px calc(24px + env(safe-area-inset-bottom))}
+.fld{display:block;margin-bottom:13px}
+.fld>span{display:block;font-size:11.5px;color:var(--muted);letter-spacing:.08em;margin-bottom:5px}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);background:var(--card);
+  border-radius:9px;padding:10px 11px;color:var(--ink);outline:0;font-size:16px;transition:border-color .16s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--green)}
+.fld textarea{resize:vertical;line-height:1.6}
+.fld-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media (max-width:420px){.fld-row{grid-template-columns:1fr}}
+.star-pick{display:flex;align-items:center;gap:10px}
+.star-pick .stars{cursor:pointer}
+.star-pick .num{font:600 15px/1 "Songti SC",Georgia,serif;color:var(--star);min-width:34px}
+
+/* ---------- 详情 ---------- */
+.dt-hero{display:flex;gap:14px;margin-bottom:15px}
+.dt-cv{flex:0 0 96px;width:96px;aspect-ratio:3/4;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font:600 26px/1.2 "Songti SC",Georgia,serif;text-align:center;padding:8px;word-break:break-word}
+.dt-main{flex:1;min-width:0;padding-top:2px}
+.dt-main h2{margin:0 0 5px;font:600 19px/1.35 "Songti SC",Georgia,serif;letter-spacing:.02em;word-break:break-word}
+.dt-main p{margin:0 0 5px;font-size:12.5px;color:var(--muted)}
+.dt-seg{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 4px}
+.dt-seg button{height:33px;padding:0 13px;border-radius:17px;border:1px solid var(--line);background:var(--card);
+  color:var(--ink-2);font-size:13px;cursor:pointer}
+.dt-seg button.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.dt-note{font-size:11.5px;color:var(--muted);margin:14px 0 0;line-height:1.8}
+.dt-del{width:100%;margin-top:16px;height:44px;border-radius:10px;border:1px solid #f0dcd8;background:#fff;
+  color:var(--red);font-size:14px;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:80;background:rgba(24,26,30,.9);color:#fff;font-size:13px;padding:9px 16px;border-radius:20px;
+  opacity:0;pointer-events:none;transition:opacity .22s}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">我的<em>豆瓣</em><span>personal</span></div>
+    <div class="sync" id="syncState"><i></i><span id="syncText">连接中</span></div>
+  </header>
+
+  <main>
+    <!-- ① 时间线 -->
+    <section class="view is-active" id="view-stream">
+      <div class="hero">
+        <h1>最近</h1>
+        <p><span data-sp-bindable="database" data-sp-database-id="local" id="streamCount">0</span> 条标记 · 按标记时间倒序</p>
+      </div>
+      <div id="streamList"></div>
+      <div class="empty" id="streamEmpty" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <b>还没有任何标记</b>
+        点下面的 ＋ 记下第一部电影、第一本书
+      </div>
+    </section>
+
+    <!-- ② 条目库 -->
+    <section class="view" id="view-shelf">
+      <div class="searchbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+        <input id="searchInput" type="search" placeholder="搜索标题、创作者、标签、短评" autocomplete="off">
+      </div>
+      <div class="chips" id="catChips"></div>
+      <div class="chips" id="statusChips"></div>
+      <div class="grid" id="shelfGrid"></div>
+      <div class="empty" id="shelfEmpty" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="4" width="7" height="7" rx="1.4"/><rect x="14" y="4" width="7" height="7" rx="1.4"/><rect x="3" y="15" width="7" height="7" rx="1.4"/><rect x="14" y="15" width="7" height="7" rx="1.4"/></svg>
+        <b id="shelfEmptyTtl">没有匹配的条目</b>
+        <span id="shelfEmptySub">换个关键词，或切回「全部」看看</span>
+      </div>
+    </section>
+
+    <!-- ③ 我的 -->
+    <section class="view" id="view-me">
+      <div class="hero"><h1>我的放映室</h1><p>所有数字都来自你的条目库，随标记实时变化</p></div>
+      <div class="stat-row">
+        <div class="stat"><b data-sp-bindable="database" data-sp-database-id="local" id="stTotal">0</b><span>条目总数</span></div>
+        <div class="stat"><b data-sp-bindable="database" data-sp-database-id="local" id="stDone">0</b><span>已看过</span></div>
+        <div class="stat"><b data-sp-bindable="database" data-sp-database-id="local" id="stWish">0</b><span>想看</span></div>
+        <div class="stat"><b data-sp-bindable="database" data-sp-database-id="local" id="stAvg">—</b><span>我的均分</span></div>
+      </div>
+      <div class="panel">
+        <h3>评分分布</h3>
+        <div id="barChart"></div>
+      </div>
+      <div class="panel">
+        <h3>分类占比</h3>
+        <div class="donut-wrap">
+          <div id="donut"></div>
+          <ul class="legend" id="donutLegend"></ul>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>我的标签</h3>
+        <div class="tags" id="tagCloud"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab is-active" data-view="stream" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"/></svg>时间线
+    </button>
+    <button class="tab" data-view="shelf" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="7" height="7" rx="1.4"/><rect x="14" y="4" width="7" height="7" rx="1.4"/><rect x="3" y="15" width="7" height="7" rx="1.4"/><rect x="14" y="15" width="7" height="7" rx="1.4"/></svg>条目库
+    </button>
+    <button class="tab tab-add" id="btnAdd" type="button" aria-label="添加条目"><i>＋</i></button>
+    <button class="tab" data-view="me" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.2 3.6-6.4 8-6.4s8 2.2 8 6.4"/></svg>我的
+    </button>
+  </nav>
+</div>
+
+<div class="mask" id="mask" hidden></div>
+
+<!-- 标记抽屉 -->
+<div class="sheet" id="sheetAdd" hidden>
+  <div class="sheet-head">
+    <button type="button" id="addClose">取消</button>
+    <div class="ttl">标记一部作品</div>
+    <button type="button" class="primary" id="addSave">保存</button>
+  </div>
+  <form class="sheet-body" id="addForm" autocomplete="off">
+    <label class="fld"><span>标题</span>
+      <input name="f_title" required maxlength="60" placeholder="电影 / 书 / 专辑 / 剧集名">
+    </label>
+    <div class="fld-row">
+      <label class="fld"><span>分类</span><select name="f_cat" required></select></label>
+      <label class="fld"><span>状态</span><select name="f_status"></select></label>
+    </div>
+    <div class="fld-row">
+      <label class="fld"><span>创作者</span><input name="f_creator" maxlength="40" placeholder="导演 / 作者 / 歌手"></label>
+      <label class="fld"><span>年份</span><input name="f_year" type="number" inputmode="numeric" min="1800" max="2100" placeholder="2024"></label>
+    </div>
+    <div class="fld"><span>评分（点星星，再点同一颗减半星）</span>
+      <div class="star-pick">
+        <div class="stars big" id="starInput"><b style="width:0%">★★★★★</b>★★★★★</div>
+        <span class="num" id="starNum">未评</span>
+      </div>
+      <input type="hidden" name="f_rating" value="">
+    </div>
+    <label class="fld"><span>短评</span>
+      <textarea name="f_short" rows="2" maxlength="140" placeholder="一句话，140 字以内"></textarea>
+    </label>
+    <label class="fld"><span>长评</span>
+      <textarea name="f_long" rows="4" placeholder="想多写几句就写在这里"></textarea>
+    </label>
+    <label class="fld"><span>标签（用 / 分隔）</span>
+      <input name="f_tags" maxlength="80" placeholder="黑色幽默 / 公路片 / 二刷">
+    </label>
+    <label class="fld"><span>标记日期</span>
+      <input name="f_date" type="date">
+    </label>
+  </form>
+</div>
+
+<!-- 详情抽屉 -->
+<div class="sheet" id="sheetDetail" hidden>
+  <div class="sheet-head">
+    <button type="button" id="dtClose">返回</button>
+    <div class="ttl">条目详情</div>
+    <button type="button" class="primary" id="dtSave">保存修改</button>
+  </div>
+  <div class="sheet-body" id="detailBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+  'use strict';
+
+  var DATABASE_ID = 'local';
+  var LS_DRAFT = 'wb_pdouban_draft_v1';
+  var NS = 'http://www.w3.org/2000/svg';
+
+  var STATE = {
+    rows: [], view: 'stream', cat: '全部', status: '全部', q: '',
+    loading: true, error: '', schema: { '分类': [], '状态': [] },
+    detailId: null, detailStatus: '', detailRating: 0, rating: 0
+  };
+
+  /* ---- 本地 REST 适配层：对外形状与原 SDK 一致，业务代码不用改 ---- */
+  function apiReq(method, path, body) {
+    var opt = { method: method, headers: {} };
+    if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+    return fetch(path, opt).then(function (res) {
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      return res.json();
+    });
+  }
+  var db = {
+    query: function (p) {
+      var q = '?pageSize=' + encodeURIComponent(p.pageSize || 50);
+      if (p.startCursor) { q += '&startCursor=' + encodeURIComponent(p.startCursor); }
+      return apiReq('GET', '/api/entries' + q);
+    },
+    addRecord: function (p) { return apiReq('POST', '/api/entries', { properties: p.properties }); },
+    updateRecord: function (p) { return apiReq('PATCH', '/api/entries/' + p.recordId, { properties: p.properties }); },
+    deleteRecord: function (p) { return apiReq('DELETE', '/api/entries/' + p.recordId); },
+    getSchema: function () { return apiReq('GET', '/api/schema'); },
+    onUpdated: null
+  };
+
+  /* ================= 工具 ================= */
+  function $(id) { return document.getElementById(id); }
+  function mk(tag, cls, txt) {
+    var n = document.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (txt !== undefined && txt !== null) { n.textContent = String(txt); }
+    return n;
+  }
+  function svgEl(tag, attrs) {
+    var n = document.createElementNS(NS, tag), k;
+    for (k in attrs) { if (Object.prototype.hasOwnProperty.call(attrs, k)) { n.setAttribute(k, attrs[k]); } }
+    return n;
+  }
+  function mark(node) {
+    node.setAttribute('data-sp-bindable', 'database');
+    node.setAttribute('data-sp-database-id', DATABASE_ID);
+    return node;
+  }
+  function pad2(n) { return n < 10 ? '0' + n : String(n); }
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function dateStr(v) { return v ? String(v).slice(0, 10) : ''; }
+  function hashStr(s) {
+    var h = 0, i, t = String(s || '');
+    for (i = 0; i < t.length; i++) { h = (h * 31 + t.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
+  var PALETTE = [
+    ['#2b3a55', '#161d2b'], ['#5c2a2a', '#2b1414'], ['#1f4a3d', '#10241c'],
+    ['#4a3b21', '#241d10'], ['#3b2b52', '#1d1529'], ['#244b5c', '#10242d'],
+    ['#5a2f45', '#2b1521'], ['#3d4030', '#1e2016']
+  ];
+  function coverBg(title) {
+    var p = PALETTE[hashStr(title) % PALETTE.length];
+    return 'linear-gradient(152deg,' + p[0] + ',' + p[1] + ')';
+  }
+  function firstChar(t) {
+    var s = String(t || '?').replace(/[《》\s]/g, '');
+    return s.slice(0, 1) || '?';
+  }
+  function num(v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  function starsEl(v, big) {
+    var wrap = mk('span', 'stars' + (big ? ' big' : ''));
+    var fill = mk('b');
+    fill.textContent = '\u2605\u2605\u2605\u2605\u2605';
+    var pct = Math.max(0, Math.min(5, num(v))) / 5 * 100;
+    fill.style.width = pct + '%';
+    wrap.appendChild(fill);
+    wrap.appendChild(document.createTextNode('\u2605\u2605\u2605\u2605\u2605'));
+    return wrap;
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast on';
+    if (toastTimer) { clearTimeout(toastTimer); }
+    toastTimer = setTimeout(function () { t.className = 'toast'; }, 1900);
+  }
+  function setSync(kind, text) {
+    var box = $('syncState');
+    box.className = 'sync' + (kind === 'on' ? ' on' : (kind === 'off' ? ' off' : ''));
+    $('syncText').textContent = text;
+  }
+  function splitTags(s) {
+    if (!s) { return []; }
+    return String(s).split(/[\/／、,，;；|]+/).map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+  }
+
+  /* ================= 数据层 ================= */
+  function loadSchema(cb) {
+    if (!db) { cb(); return; }
+    db.getSchema({ databaseId: DATABASE_ID }).then(function (schema) {
+      var props = (schema && schema.properties) || [], i, f;
+      for (i = 0; i < props.length; i++) {
+        f = props[i];
+        if ((f.type === 'select' || f.type === 'multi_select') && f.config && f.config.options) {
+          STATE.schema[f.name] = f.config.options;
+        }
+      }
+      cb();
+    }).catch(function (err) {
+      console.error('[schema] 读取表结构失败', err);
+      cb();
+    });
+  }
+
+  function fetchAll(cursor, acc, guard) {
+    acc = acc || [];
+    guard = guard || 0;
+    if (!db) { finishLoad([], '本地服务没连上'); return; }
+    if (guard > 100) { finishLoad(acc, ''); return; }
+    db.query({
+      databaseId: DATABASE_ID,
+      sorts: [{ property: '标记日期', direction: 'descending' }],
+      pageSize: 200,
+      startCursor: cursor
+    }).then(function (result) {
+      var rows = (result && result.results) || [];
+      acc = acc.concat(rows);
+      var next = result && result.nextCursor;
+      if (result && result.hasMore && next && next !== cursor && rows.length) {
+        fetchAll(next, acc, guard + 1);
+      } else {
+        finishLoad(acc, '');
+      }
+    }).catch(function (err) {
+      console.error('[query] 读取条目失败', err);
+      finishLoad(acc, '条目读取失败，请检查网络后重试');
+    });
+  }
+
+  function finishLoad(rows, err) {
+    STATE.rows = sortRows(rows);
+    STATE.loading = false;
+    STATE.error = err;
+    setSync(err ? 'off' : 'on', err ? '离线' : '已同步');
+    refreshAll();
+  }
+
+  function sortRows(rows) {
+    return rows.slice().sort(function (a, b) {
+      var da = dateStr(a['标记日期']) || '0000-00-00';
+      var db2 = dateStr(b['标记日期']) || '0000-00-00';
+      if (da === db2) { return 0; }
+      return da < db2 ? 1 : -1;
+    });
+  }
+
+  function reload() {
+    STATE.loading = true;
+    STATE.error = '';
+    refreshAll();
+    fetchAll();
+  }
+
+  /* ================= 计算层 ================= */
+  function visibleRows() {
+    var out = [], i, r, q = STATE.q.toLowerCase();
+    for (i = 0; i < STATE.rows.length; i++) {
+      r = STATE.rows[i];
+      if (STATE.cat !== '全部' && r['分类'] !== STATE.cat) { continue; }
+      if (STATE.status !== '全部' && r['状态'] !== STATE.status) { continue; }
+      if (q) {
+        var hay = [r['标题'], r['创作者'], r['标签'], r['短评'], r['分类'], r['状态']].join(' ').toLowerCase();
+        if (hay.indexOf(q) < 0) { continue; }
+      }
+      out.push(r);
+    }
+    return out;
+  }
+
+  function computeStats() {
+    var rows = STATE.rows, s = {
+      total: rows.length, done: 0, wish: 0, doing: 0, drop: 0,
+      rated: 0, sum: 0, avg: 0, cats: [], rates: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], tags: []
+    }, i, r, st, v, catMap = {}, tagMap = {}, cname;
+    for (i = 0; i < rows.length; i++) {
+      r = rows[i];
+      st = r['状态'];
+      if (st === '看过') { s.done++; } else if (st === '想看') { s.wish++; }
+      else if (st === '在看') { s.doing++; } else if (st === '弃了') { s.drop++; }
+      v = num(r['评分']);
+      if (v > 0) { s.rated++; s.sum += v; s.rates[Math.min(9, Math.max(0, Math.round(v * 2) - 1))]++; }
+      cname = r['分类'] || '其他';
+      catMap[cname] = (catMap[cname] || 0) + 1;
+      var tg = splitTags(r['标签']), j;
+      for (j = 0; j < tg.length; j++) { tagMap[tg[j]] = (tagMap[tg[j]] || 0) + 1; }
+    }
+    s.avg = s.rated ? s.sum / s.rated : 0;
+    for (cname in catMap) {
+      if (Object.prototype.hasOwnProperty.call(catMap, cname)) { s.cats.push({ name: cname, n: catMap[cname] }); }
+    }
+    s.cats.sort(function (a, b) { return b.n - a.n; });
+    for (cname in tagMap) {
+      if (Object.prototype.hasOwnProperty.call(tagMap, cname)) { s.tags.push({ name: cname, n: tagMap[cname] }); }
+    }
+    s.tags.sort(function (a, b) { return b.n - a.n; });
+    return s;
+  }
+
+  /* ================= 渲染层（互不调用，只由 refreshAll 调度） ================= */
+  function refreshAll() {
+    renderStream();
+    renderShelf();
+    renderMe();
+  }
+
+  function skeletonInto(box, n) {
+    var i;
+    box.textContent = '';
+    for (i = 0; i < n; i++) {
+      var wrap = mk('div', 'act');
+      var cv = mk('div', 'act-cv sk');
+      var body = mk('div', 'act-body');
+      body.appendChild(mk('div', 'sk sk-line'));
+      body.appendChild(mk('div', 'sk sk-line'));
+      wrap.appendChild(cv);
+      wrap.appendChild(body);
+      box.appendChild(wrap);
+    }
+  }
+
+  function errBlock(msg) {
+    var box = mk('div', 'empty');
+    var b = mk('b', null, '没能读到数据');
+    box.appendChild(b);
+    box.appendChild(document.createTextNode(msg || ''));
+    var btn = mk('button', 'chip', '重新加载');
+    btn.style.marginTop = '12px';
+    btn.onclick = function () { reload(); };
+    box.appendChild(document.createElement('br'));
+    box.appendChild(btn);
+    return box;
+  }
+
+  function renderStream() {
+    var list = $('streamList');
+    var count = $('streamCount');
+    count.textContent = STATE.rows.length;
+    list.textContent = '';
+    $('streamEmpty').hidden = true;
+
+    if (STATE.loading) { skeletonInto(list, 3); return; }
+    if (STATE.error) { list.appendChild(errBlock(STATE.error)); return; }
+    if (!STATE.rows.length) { $('streamEmpty').hidden = false; return; }
+
+    var curDay = '', dayBox = null, i, r, key;
+    for (i = 0; i < STATE.rows.length; i++) {
+      r = STATE.rows[i];
+      key = dateStr(r['标记日期']) || '未标日期';
+      if (key !== curDay) {
+        curDay = key;
+        dayBox = mk('div', 'stream-day');
+        var lab = mk('div', 'day-label');
+        var b = mk('b', null, key === '未标日期' ? '未标日期' : key.replace(/-/g, ' / '));
+        lab.appendChild(b);
+        dayBox.appendChild(lab);
+        list.appendChild(dayBox);
+      }
+      dayBox.appendChild(streamItem(r));
+    }
+  }
+
+  function streamItem(r) {
+    var wrap = mk('div', 'act');
+    var cv = mk('div', 'act-cv');
+    cv.style.background = coverBg(r['标题']);
+    cv.appendChild(mk('span', null, firstChar(r['标题'])));
+    var body = mk('div', 'act-body');
+
+    var line = mark(mk('div', 'act-line'));
+    line.appendChild(mk('span', 'st', r['状态'] || '看过'));
+    line.appendChild(mk('b', null, '《' + (r['标题'] || '未命名') + '》'));
+    if (num(r['评分']) > 0) { line.appendChild(starsEl(r['评分'])); }
+    body.appendChild(line);
+
+    if (r['短评']) {
+      body.appendChild(mark(mk('p', 'act-sub', r['短评'])));
+    }
+    var meta = mk('div', 'act-meta');
+    if (r['分类']) { meta.appendChild(mk('span', 'pill cat', r['分类'])); }
+    if (r['创作者']) { meta.appendChild(mk('span', null, r['创作者'])); }
+    if (r['年份']) { meta.appendChild(mk('span', null, r['年份'])); }
+    var tg = splitTags(r['标签']), j;
+    for (j = 0; j < tg.length && j < 3; j++) { meta.appendChild(mk('span', 'pill', tg[j])); }
+    body.appendChild(meta);
+
+    wrap.appendChild(cv);
+    wrap.appendChild(body);
+    wrap.onclick = function () { openDetail(r.record_id); };
+    return wrap;
+  }
+
+  function renderShelf() {
+    var grid = $('shelfGrid'), empty = $('shelfEmpty');
+    var rows = visibleRows(), i;
+    grid.textContent = '';
+    syncChips();
+
+    if (STATE.loading) {
+      empty.hidden = true;
+      for (i = 0; i < 4; i++) {
+        var sk = mk('div', 'mv');
+        sk.appendChild(mk('div', 'mv-cv sk'));
+        var inf = mk('div', 'mv-info');
+        inf.appendChild(mk('div', 'sk sk-line'));
+        sk.appendChild(inf);
+        grid.appendChild(sk);
+      }
+      return;
+    }
+    if (!rows.length) {
+      $('shelfEmptyTtl').textContent = STATE.rows.length ? '没有匹配的条目' : '条目库还是空的';
+      $('shelfEmptySub').textContent = STATE.rows.length ? '换个关键词，或切回「全部」看看' : '点下面的 ＋ 标记第一部';
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    for (i = 0; i < rows.length; i++) { grid.appendChild(shelfCard(rows[i])); }
+  }
+
+  function shelfCard(r) {
+    var card = mk('div', 'mv');
+    var cv = mk('div', 'mv-cv');
+    cv.style.background = coverBg(r['标题']);
+    cv.appendChild(mk('em', null, firstChar(r['标题'])));
+    cv.appendChild(mk('span', 'mv-badge', r['分类'] || '条目'));
+    if (num(r['评分']) > 0) { cv.appendChild(mk('span', 'mv-rate', num(r['评分']).toFixed(1))); }
+    card.appendChild(cv);
+
+    var info = mk('div', 'mv-info');
+    info.appendChild(mark(mk('p', 'mv-title', r['标题'] || '未命名')));
+    var sub = [r['创作者'], r['年份']].filter(function (x) { return x; }).join(' · ');
+    info.appendChild(mk('p', 'mv-sub', sub || (r['状态'] || '未标状态')));
+    if (r['短评']) { info.appendChild(mark(mk('p', 'mv-quote', r['短评']))); }
+    var foot = mk('div', 'mv-foot');
+    foot.appendChild(mk('span', 'pill', r['状态'] || '未标'));
+    if (num(r['评分']) > 0) { foot.appendChild(starsEl(r['评分'])); }
+    info.appendChild(foot);
+    card.appendChild(info);
+    card.onclick = function () { openDetail(r.record_id); };
+    return card;
+  }
+
+  /* ================= 我的（统计与图表） ================= */
+  function renderMe() {
+    var s = computeStats();
+    $('stTotal').textContent = s.total;
+    $('stDone').textContent = s.done;
+    $('stWish').textContent = s.wish;
+    $('stAvg').textContent = s.rated ? s.avg.toFixed(1) : '—';
+    drawBars(s);
+    drawDonut(s);
+    drawTags(s);
+  }
+
+  function drawBars(s) {
+    var box = $('barChart');
+    box.textContent = '';
+    var W = 320, H = 130, padL = 6, padR = 6, inner = W - padL - padR;
+    var bw = inner / 10, max = 1, i, h, y;
+    for (i = 0; i < 10; i++) { if (s.rates[i] > max) { max = s.rates[i]; } }
+    var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', height: '130' });
+    svg.style.display = 'block';
+    for (i = 0; i < 10; i++) {
+      h = s.rates[i] ? Math.max(4, (s.rates[i] / max) * (H - 42)) : 2;
+      y = H - 24 - h;
+      var rect = svgEl('rect', {
+        x: padL + i * bw + 2, y: y, width: Math.max(6, bw - 7), height: h,
+        rx: 3, fill: s.rates[i] ? '#2f9e44' : '#eae7e0',
+        opacity: s.rates[i] ? String(0.55 + 0.45 * (s.rates[i] / max)) : '1'
+      });
+      svg.appendChild(rect);
+      if (s.rates[i]) {
+        var tv = svgEl('text', { x: padL + i * bw + bw / 2, y: y - 5, 'text-anchor': 'middle', 'font-size': '9', fill: '#8a9199' });
+        tv.textContent = String(s.rates[i]);
+        svg.appendChild(tv);
+      }
+      if (i % 2 === 1) {
+        var lb = svgEl('text', { x: padL + i * bw + bw / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '9.5', fill: '#8a9199' });
+        lb.textContent = ((i + 1) / 2).toFixed(0);
+        svg.appendChild(lb);
+      }
+    }
+    box.appendChild(svg);
+  }
+
+  var CAT_COLORS = ['#2f9e44', '#4a7fb5', '#c08a2e', '#8e5aa8', '#3f8f8b', '#b5563f'];
+  function drawDonut(s) {
+    var box = $('donut'), legend = $('donutLegend');
+    box.textContent = '';
+    legend.textContent = '';
+    var total = s.total, i;
+    var cx = 62, cy = 62, r = 46, C = 2 * Math.PI * r, acc = 0;
+    var svg = svgEl('svg', { viewBox: '0 0 124 124', width: '124', height: '124' });
+    svg.appendChild(svgEl('circle', { cx: cx, cy: cy, r: r, fill: 'none', stroke: '#efece5', 'stroke-width': '16' }));
+    if (total > 0) {
+      for (i = 0; i < s.cats.length; i++) {
+        var dash = (s.cats[i].n / total) * C;
+        svg.appendChild(svgEl('circle', {
+          cx: cx, cy: cy, r: r, fill: 'none', stroke: CAT_COLORS[i % CAT_COLORS.length], 'stroke-width': '16',
+          'stroke-dasharray': dash + ' ' + (C - dash), 'stroke-dashoffset': -acc,
+          transform: 'rotate(-90 ' + cx + ' ' + cy + ')'
+        }));
+        acc += dash;
+      }
+    }
+    var t1 = svgEl('text', { x: cx, y: cy - 1, 'text-anchor': 'middle', 'font-size': '21', 'font-weight': '600', fill: '#1b1f24' });
+    t1.textContent = String(total);
+    svg.appendChild(t1);
+    var t2 = svgEl('text', { x: cx, y: cy + 16, 'text-anchor': 'middle', 'font-size': '10', fill: '#8a9199' });
+    t2.textContent = '条目';
+    svg.appendChild(t2);
+    box.appendChild(svg);
+
+    if (!s.cats.length) { legend.appendChild(mk('li', null, '还没有条目')); return; }
+    for (i = 0; i < s.cats.length; i++) {
+      var li = mk('li');
+      var dot = mk('i');
+      dot.style.background = CAT_COLORS[i % CAT_COLORS.length];
+      li.appendChild(dot);
+      li.appendChild(document.createTextNode(s.cats[i].name));
+      li.appendChild(mk('span', null, Math.round((s.cats[i].n / total) * 100) + '% · ' + s.cats[i].n));
+      legend.appendChild(li);
+    }
+  }
+
+  function drawTags(s) {
+    var box = $('tagCloud');
+    box.textContent = '';
+    if (!s.tags.length) {
+      box.appendChild(mk('span', 'tag', '还没有标签，标记时用 / 分隔写几个'));
+      return;
+    }
+    var i;
+    for (i = 0; i < s.tags.length && i < 18; i++) {
+      var n = mk('span', 'tag', s.tags[i].name);
+      n.appendChild(mk('u', null, String(s.tags[i].n)));
+      box.appendChild(n);
+    }
+  }
+
+  /* ================= 筛选胶囊 ================= */
+  function textsOf(field) {
+    var arr = STATE.schema[field] || [], out = [], i;
+    for (i = 0; i < arr.length; i++) { out.push(arr[i].text); }
+    return out;
+  }
+  function fillChips(box, items, cur, onPick) {
+    box.textContent = '';
+    var i;
+    for (i = 0; i < items.length; i++) {
+      (function (v) {
+        var b = mk('button', 'chip' + (v === cur ? ' on' : ''), v);
+        b.type = 'button';
+        b.onclick = function () { onPick(v); };
+        box.appendChild(b);
+      })(items[i]);
+    }
+  }
+  function buildChips() {
+    fillChips($('catChips'), ['全部'].concat(textsOf('分类')), STATE.cat, function (v) {
+      STATE.cat = v; refreshAll();
+    });
+    fillChips($('statusChips'), ['全部'].concat(textsOf('状态')), STATE.status, function (v) {
+      STATE.status = v; refreshAll();
+    });
+  }
+  function syncChips() {
+    var boxes = [$('catChips'), $('statusChips')], cur = [STATE.cat, STATE.status];
+    var k, i, nodes;
+    for (k = 0; k < boxes.length; k++) {
+      if (!boxes[k]) { continue; }
+      nodes = boxes[k].children;
+      for (i = 0; i < nodes.length; i++) {
+        nodes[i].className = 'chip' + (nodes[i].textContent === cur[k] ? ' on' : '');
+      }
+    }
+  }
+
+  /* ================= 星级选择 ================= */
+  function paintStars(wrap, v) {
+    var b = wrap.querySelector('b');
+    if (b) { b.style.width = (Math.max(0, Math.min(5, v)) / 5 * 100) + '%'; }
+  }
+  function ratingFromClick(wrap, ev) {
+    var rect = wrap.getBoundingClientRect();
+    var x = (ev.clientX || 0) - rect.left;
+    var v = Math.ceil((x / Math.max(1, rect.width)) * 10) / 2;
+    if (v < 0.5) { v = 0.5; }
+    if (v > 5) { v = 5; }
+    return v;
+  }
+  function setFormRating(v) {
+    STATE.rating = v;
+    paintStars($('starInput'), v);
+    $('starNum').textContent = v > 0 ? v.toFixed(1) : '未评';
+    var h = document.querySelector('[name="f_rating"]');
+    if (h) { h.value = v > 0 ? String(v) : ''; }
+  }
+  function bindStarPick() {
+    var wrap = $('starInput');
+    wrap.addEventListener('click', function (ev) {
+      var v = ratingFromClick(wrap, ev);
+      if (Math.abs(v - STATE.rating) < 0.01) { v = v - 0.5; }
+      if (v < 0) { v = 0; }
+      setFormRating(v);
+      queueDraft();
+    });
+  }
+
+  /* ================= 详情抽屉 ================= */
+  function findRow(rid) {
+    var i;
+    for (i = 0; i < STATE.rows.length; i++) {
+      if (STATE.rows[i].record_id === rid) { return STATE.rows[i]; }
+    }
+    return null;
+  }
+
+  function openDetail(rid) {
+    var r = findRow(rid);
+    if (!r) { return; }
+    STATE.detailId = rid;
+    STATE.detailStatus = r['状态'] || '';
+    STATE.detailRating = num(r['评分']);
+    var body = $('detailBody');
+    body.textContent = '';
+
+    var hero = mk('div', 'dt-hero');
+    var cv = mk('div', 'dt-cv');
+    cv.style.background = coverBg(r['标题']);
+    cv.appendChild(mk('span', null, firstChar(r['标题'])));
+    var main = mk('div', 'dt-main');
+    main.appendChild(mk('h2', null, r['标题'] || '未命名'));
+    var meta = [r['分类'], r['创作者'], r['年份']].filter(function (x) { return x; }).join(' · ');
+    main.appendChild(mk('p', null, meta || '未填写分类与年份'));
+    main.appendChild(mk('p', null, '标记于 ' + (dateStr(r['标记日期']) || '未标日期')));
+    var tj = splitTags(r['标签']);
+    if (tj.length) {
+      var tagRow = mk('p', null, tj.join(' / '));
+      tagRow.style.color = '#2f9e44';
+      main.appendChild(tagRow);
+    }
+    hero.appendChild(cv);
+    hero.appendChild(main);
+    body.appendChild(hero);
+
+    var segWrap = mk('div');
+    segWrap.appendChild(mk('span', null, '状态')).style.cssText = 'display:block;font-size:11.5px;color:#8a9199;letter-spacing:.08em;margin-bottom:6px';
+    var seg = mk('div', 'dt-seg');
+    var stats = textsOf('状态'), i;
+    for (i = 0; i < stats.length; i++) {
+      (function (st) {
+        var b = mk('button', 'dt-seg-btn' + (st === STATE.detailStatus ? ' on' : ''), st);
+        b.type = 'button';
+        b.style.cssText = 'height:33px;padding:0 13px;border-radius:17px;border:1px solid #eae7e0;background:#fff;color:#4a5158;font-size:13px;cursor:pointer';
+        if (st === STATE.detailStatus) { b.style.cssText += ';background:#2f9e44;border-color:#2f9e44;color:#fff;font-weight:600'; }
+        b.onclick = function () {
+          STATE.detailStatus = st;
+          var sib = seg.children, k;
+          for (k = 0; k < sib.length; k++) { sib[k].style.cssText = 'height:33px;padding:0 13px;border-radius:17px;border:1px solid #eae7e0;background:#fff;color:#4a5158;font-size:13px;cursor:pointer'; }
+          b.style.cssText += ';background:#2f9e44;border-color:#2f9e44;color:#fff;font-weight:600';
+        };
+        seg.appendChild(b);
+      })(stats[i]);
+    }
+    segWrap.appendChild(seg);
+    body.appendChild(segWrap);
+
+    var rateWrap = mk('div');
+    rateWrap.style.cssText = 'margin:16px 0 4px';
+    var rateLabel = mk('span', null, '我的评分');
+    rateLabel.style.cssText = 'display:block;font-size:11.5px;color:#8a9199;letter-spacing:.08em;margin-bottom:6px';
+    rateWrap.appendChild(rateLabel);
+    var pick = mk('div', 'star-pick');
+    var st = starsEl(STATE.detailRating, true);
+    st.style.cursor = 'pointer';
+    var numLab = mk('span', 'num', STATE.detailRating > 0 ? STATE.detailRating.toFixed(1) : '未评');
+    numLab.style.cssText = 'font:600 15px/1 "Songti SC",Georgia,serif;color:#e8a33d;min-width:34px';
+    st.onclick = function (ev) {
+      var v = ratingFromClick(st, ev);
+      if (Math.abs(v - STATE.detailRating) < 0.01) { v = v - 0.5; }
+      if (v < 0) { v = 0; }
+      STATE.detailRating = v;
+      paintStars(st, v);
+      numLab.textContent = v > 0 ? v.toFixed(1) : '未评';
+    };
+    pick.appendChild(st);
+    pick.appendChild(numLab);
+    rateWrap.appendChild(pick);
+    body.appendChild(rateWrap);
+
+    var shortFld = mk('label', 'fld');
+    shortFld.appendChild(mk('span', null, '短评'));
+    var shortTa = mk('textarea');
+    shortTa.id = 'dtShort';
+    shortTa.rows = 2;
+    shortTa.maxLength = 140;
+    shortTa.value = r['短评'] || '';
+    shortFld.appendChild(shortTa);
+    body.appendChild(shortFld);
+
+    var longFld = mk('label', 'fld');
+    longFld.appendChild(mk('span', null, '长评'));
+    var longTa = mk('textarea');
+    longTa.id = 'dtLong';
+    longTa.rows = 5;
+    longTa.value = r['长评'] || '';
+    longFld.appendChild(longTa);
+    body.appendChild(longFld);
+
+    body.appendChild(mk('p', 'dt-note', '改完状态、星级或文字，点右上角「保存修改」写回条目库。'));
+
+    var del = mk('button', 'dt-del', '删除这条标记');
+    del.type = 'button';
+    del.onclick = function () { removeEntry(rid); };
+    body.appendChild(del);
+
+    showSheet('sheetDetail');
+  }
+
+  function saveDetail() {
+    if (!db || !STATE.detailId) { toast('本地服务没连上'); return; }
+    var btn = $('dtSave');
+    var props = {};
+    if (STATE.detailStatus) { props['状态'] = { select: STATE.detailStatus }; }
+    props['评分'] = { number: STATE.detailRating > 0 ? STATE.detailRating : 0 };
+    props['短评'] = { text: ($('dtShort') ? $('dtShort').value : '').trim() };
+    props['长评'] = { text: ($('dtLong') ? $('dtLong').value : '').trim() };
+    btn.disabled = true;
+    btn.textContent = '保存中';
+    db.updateRecord({ databaseId: DATABASE_ID, recordId: STATE.detailId, properties: props }).then(function () {
+      btn.disabled = false;
+      btn.textContent = '保存修改';
+      hideSheet('sheetDetail');
+      toast('已更新');
+      fetchAll();
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = '保存修改';
+      console.error('[updateRecord] 保存失败', err);
+      toast('保存失败，请稍后再试');
+    });
+  }
+
+  function removeEntry(rid) {
+    if (!db) { toast('本地服务没连上'); return; }
+    if (!window.confirm('删除后无法恢复，确定要删掉这条标记吗？')) { return; }
+    db.deleteRecord({ databaseId: DATABASE_ID, recordId: rid }).then(function () {
+      hideSheet('sheetDetail');
+      toast('已删除');
+      fetchAll();
+    }).catch(function (err) {
+      console.error('[deleteRecord] 删除失败', err);
+      toast('删除失败，请稍后再试');
+    });
+  }
+
+  /* ================= 标记表单 ================= */
+  function fillSelect(sel, opts, placeholder) {
+    if (!sel) { return; }
+    sel.textContent = '';
+    var o0 = document.createElement('option');
+    o0.value = '';
+    o0.textContent = placeholder;
+    sel.appendChild(o0);
+    var i;
+    for (i = 0; i < opts.length; i++) {
+      var o = document.createElement('option');
+      o.value = opts[i].id || opts[i].text;
+      o.textContent = opts[i].text;
+      sel.appendChild(o);
+    }
+  }
+  function renderSelectOptions() {
+    fillSelect(document.querySelector('[name="f_cat"]'), STATE.schema['分类'] || [], '请选择分类');
+    fillSelect(document.querySelector('[name="f_status"]'), STATE.schema['状态'] || [], '暂不标状态');
+  }
+  function val(name) {
+    var el = document.querySelector('[name="' + name + '"]');
+    return el && el.value ? String(el.value) : '';
+  }
+  function collectDraft() {
+    return {
+      f_title: val('f_title'), f_creator: val('f_creator'), f_year: val('f_year'),
+      f_cat: val('f_cat'), f_status: val('f_status'), f_short: val('f_short'),
+      f_long: val('f_long'), f_tags: val('f_tags'), f_date: val('f_date'),
+      rating: STATE.rating
+    };
+  }
+  var draftTimer = null;
+  function queueDraft() {
+    if (draftTimer) { clearTimeout(draftTimer); }
+    draftTimer = setTimeout(saveDraft, 300);
+  }
+  function saveDraft() {
+    try { window.localStorage.setItem(LS_DRAFT, JSON.stringify(collectDraft())); } catch (e) { /* storage unavailable */ }
+  }
+  function restoreDraft() {
+    try {
+      var raw = window.localStorage.getItem(LS_DRAFT);
+      if (!raw) { return; }
+      var o = JSON.parse(raw), k, el;
+      for (k in o) {
+        if (!Object.prototype.hasOwnProperty.call(o, k) || k === 'rating') { continue; }
+        el = document.querySelector('[name="' + k + '"]');
+        if (el && o[k]) { el.value = o[k]; }
+      }
+      if (o.rating) { setFormRating(num(o.rating)); }
+    } catch (e) { /* ignore broken draft */ }
+  }
+  function clearDraft() {
+    try { window.localStorage.removeItem(LS_DRAFT); } catch (e) { /* ignore */ }
+  }
+  function resetForm() {
+    var f = $('addForm');
+    if (f) { f.reset(); }
+    setFormRating(0);
+    var d = document.querySelector('[name="f_date"]');
+    if (d) { d.value = todayStr(); }
+  }
+
+  function submitAdd(ev) {
+    if (ev) { ev.preventDefault(); }
+    if (!db) { toast('本地服务没连上，保存失败'); return; }
+    var title = val('f_title').trim();
+    if (!title) { toast('先填个标题'); return; }
+    var cat = val('f_cat');
+    if (!cat) { toast('选一个分类'); return; }
+    var btn = $('addSave');
+    var props = {};
+    props['标题'] = { text: title };
+    props['分类'] = { select: cat };
+    var st = val('f_status');
+    if (st) { props['状态'] = { select: st }; }
+    var cr = val('f_creator').trim();
+    if (cr) { props['创作者'] = { text: cr }; }
+    var yr = val('f_year');
+    if (yr) { props['年份'] = { number: parseFloat(yr) }; }
+    if (STATE.rating > 0) { props['评分'] = { number: STATE.rating }; }
+    var sc = val('f_short').trim();
+    if (sc) { props['短评'] = { text: sc }; }
+    var lg = val('f_long').trim();
+    if (lg) { props['长评'] = { text: lg }; }
+    var tg = val('f_tags').trim();
+    if (tg) { props['标签'] = { text: tg }; }
+    props['标记日期'] = { date: val('f_date') || todayStr() };
+
+    btn.disabled = true;
+    btn.textContent = '保存中';
+    db.addRecord({ databaseId: DATABASE_ID, properties: props }).then(function () {
+      btn.disabled = false;
+      btn.textContent = '保存';
+      clearDraft();
+      resetForm();
+      hideSheet('sheetAdd');
+      toast('已加入条目库');
+      fetchAll();
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = '保存';
+      console.error('[addRecord] 保存失败', err);
+      toast('保存失败，请稍后再试');
+    });
+  }
+
+  /* ================= 抽屉与导航 ================= */
+  function showSheet(id) {
+    $('mask').hidden = false;
+    $(id).hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function hideSheet(id) {
+    $(id).hidden = true;
+    if ($('sheetAdd').hidden && $('sheetDetail').hidden) {
+      $('mask').hidden = true;
+      document.body.style.overflow = '';
+    }
+  }
+  function applyView() {
+    var views = document.querySelectorAll('.view'), i;
+    for (i = 0; i < views.length; i++) {
+      views[i].className = 'view' + (views[i].id === 'view-' + STATE.view ? ' is-active' : '');
+    }
+    var tabs = document.querySelectorAll('.tab[data-view]');
+    for (i = 0; i < tabs.length; i++) {
+      tabs[i].className = 'tab' + (tabs[i].getAttribute('data-view') === STATE.view ? ' is-active' : '');
+    }
+    window.scrollTo(0, 0);
+  }
+  function bindTabs() {
+    var tabs = document.querySelectorAll('.tab[data-view]'), i;
+    for (i = 0; i < tabs.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          STATE.view = btn.getAttribute('data-view');
+          applyView();
+        });
+      })(tabs[i]);
+    }
+  }
+  function bindSearch() {
+    var inp = $('searchInput'), timer = null;
+    inp.addEventListener('input', function () {
+      if (timer) { clearTimeout(timer); }
+      timer = setTimeout(function () {
+        STATE.q = inp.value.trim();
+        refreshAll();
+      }, 180);
+    });
+  }
+  function bindSheets() {
+    $('btnAdd').onclick = function () {
+      if (!$('addForm').elements['f_date'].value) { $('addForm').elements['f_date'].value = todayStr(); }
+      showSheet('sheetAdd');
+    };
+    $('addClose').onclick = function () { hideSheet('sheetAdd'); };
+    $('dtClose').onclick = function () { hideSheet('sheetDetail'); };
+    $('addSave').onclick = function () { submitAdd(null); };
+    $('dtSave').onclick = function () { saveDetail(); };
+    $('mask').onclick = function () { hideSheet('sheetAdd'); hideSheet('sheetDetail'); };
+    $('addForm').addEventListener('submit', submitAdd);
+    $('addForm').addEventListener('input', queueDraft);
+    $('addForm').addEventListener('change', queueDraft);
+  }
+  function bindRealtime() {
+    if (typeof db.onUpdated !== 'function') { return; }
+    var timer = null;
+    db.onUpdated(function () {
+      if (timer) { clearTimeout(timer); }
+      timer = setTimeout(function () { fetchAll(); }, 350);
+    });
+  }
+
+  /* ================= 启动 ================= */
+  function init() {
+    bindTabs();
+    bindSearch();
+    bindSheets();
+    bindStarPick();
+    resetForm();
+    refreshAll();
+
+    if (!db) {
+      STATE.loading = false;
+      STATE.error = '连不上本地服务：请确认 app.py 已启动（默认 8601）';
+      setSync('off', '离线');
+      refreshAll();
+      return;
+    }
+    loadSchema(function () {
+      renderSelectOptions();
+      buildChips();
+      restoreDraft();
+      setSync('on', '同步中');
+      fetchAll();
+      bindRealtime();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
